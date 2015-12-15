@@ -1,6 +1,6 @@
 ## node-amd
 
-Aim of this project is to make AMD modules usable in nodejs. Useful for sharing client-side data models with server-side.
+Aim of this project is to make AMD modules usable in nodejs. Useful for reusing client-side data model code on the server-side.
 
 ### Usage
 ```
