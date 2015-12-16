@@ -2,7 +2,7 @@
   "name": "node-amd",
   "author": "munawwar",
   "description": "RequireJS/AMD on Node.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "node-amd.js",
   "dependencies": {},
   "devDependencies": {},
