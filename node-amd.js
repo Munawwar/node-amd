@@ -22,9 +22,9 @@ GLOBAL.requirejs = {
             //console.log('baseUrl = ' + cfg.baseUrl);
 
             Object.keys(cfg.paths || {}).forEach(function (moduleName) {
-                var path = path.resolve(cfg.baseUrl, cfg.paths[moduleName]);
+                var fullPath = path.resolve(cfg.baseUrl, cfg.paths[moduleName]);
                 //console.log('Resolved path for ' + moduleName + ' to ' + path);
-                cfg.paths[moduleName] = path;
+                cfg.paths[moduleName] = fullPath;
             });
         }
     }
@@ -67,7 +67,11 @@ GLOBAL.define = (function () {
             }
             //console.log(' -- Dependency ' + fullPath);
             if (!modules[fullPath]) {
-                require(fullPath);
+                var ret = require(fullPath);
+                //Support for UMD. if ret exists, then the script took the commonjs require() route.
+                if (typeof ret === 'function' || Object.keys(ret).length) {
+                    modules[fullPath] = ret;
+                }
             }
             deps[i] = modules[fullPath];
         });
@@ -83,5 +87,3 @@ GLOBAL.define = (function () {
         modules[callerScript.replace(/\.js$/, '')] = ret;
     };
 }());
-
-GLOBAL.define.amd = true; //I lie...for the sake of compatibility.
