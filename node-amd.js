@@ -6,7 +6,7 @@
 
 var path = require('path');
 
-var amdModules = {};
+var modules = {};
 
 function getDependencies(deps, callerScript) {
     var cfg = GLOBAL.requirejs.cfg,
@@ -23,7 +23,7 @@ function getDependencies(deps, callerScript) {
         if (depPath.search(/^(http:\/\/|https:\/\/|\/\/)/) > -1) {
             console.warn(callerScript + ': http,https URLs aren\'t supported.');
             fullPath = depPath;
-            amdModules[fullPath] = {};
+            modules[fullPath] = {};
         } else if (depPath[0] === '.') { //Path relative to caller script.
             fullPath = path.resolve(callerPath, depPath);
         } else if (cfg.paths[depPath]) { //If module name is in config, load that instead
@@ -34,14 +34,14 @@ function getDependencies(deps, callerScript) {
             fullPath = path.resolve(cfg.baseUrl, depPath);
         }
         //console.log(' -- Dependency ' + fullPath);
-        if (!amdModules[fullPath]) {
+        if (!modules[fullPath]) {
             var ret = require(fullPath);
             //Support for UMD. if ret exists, then the script took the commonjs require() route.
             if (typeof ret === 'function' || Object.keys(ret).length) {
-                amdModules[fullPath] = ret;
+                modules[fullPath] = ret;
             }
         }
-        deps[i] = amdModules[fullPath];
+        deps[i] = modules[fullPath];
     });
 
     return deps;
@@ -106,7 +106,7 @@ GLOBAL.define = function (name, deps, moduleFactory) {
         ret = moduleFactory.apply(null, deps);
     }
     if (name) {
-        amdModules[name] = ret;
+        modules[name] = ret;
     }
-    amdModules[callerScript.replace(/\.js$/, '')] = ret;
+    modules[callerScript.replace(/\.js$/, '')] = ret;
 };
