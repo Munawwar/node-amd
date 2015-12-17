@@ -6,7 +6,7 @@
 
 var path = require('path');
 
-var modules = {};
+var amdModules = {};
 
 function getDependencies(deps, callerScript) {
     var cfg = GLOBAL.requirejs.cfg,
@@ -23,7 +23,7 @@ function getDependencies(deps, callerScript) {
         if (depPath.search(/^(http:\/\/|https:\/\/|\/\/)/) > -1) {
             console.warn(callerScript + ': http,https URLs aren\'t supported.');
             fullPath = depPath;
-            modules[fullPath] = {};
+            amdModules[fullPath] = {};
         } else if (depPath[0] === '.') { //Path relative to caller script.
             fullPath = path.resolve(callerPath, depPath);
         } else if (cfg.paths[depPath]) { //If module name is in config, load that instead
@@ -34,14 +34,14 @@ function getDependencies(deps, callerScript) {
             fullPath = path.resolve(cfg.baseUrl, depPath);
         }
         //console.log(' -- Dependency ' + fullPath);
-        if (!modules[fullPath]) {
+        if (!amdModules[fullPath]) {
             var ret = require(fullPath);
             //Support for UMD. if ret exists, then the script took the commonjs require() route.
             if (typeof ret === 'function' || Object.keys(ret).length) {
-                modules[fullPath] = ret;
+                amdModules[fullPath] = ret;
             }
         }
-        deps[i] = modules[fullPath];
+        deps[i] = amdModules[fullPath];
     });
 
     return deps;
@@ -86,8 +86,8 @@ GLOBAL.requirejs.config = function (cfg) {
 };
 
 GLOBAL.define = function (name, deps, moduleFactory) {
-    var args = Array.prototype.slice.call(arguments),
-        cfg = GLOBAL.requirejs.cfg;
+    var args = Array.prototype.slice.call(arguments);
+
     moduleFactory = args.pop();
     deps = args.pop() || [];
     name = args.pop();
@@ -106,7 +106,7 @@ GLOBAL.define = function (name, deps, moduleFactory) {
         ret = moduleFactory.apply(null, deps);
     }
     if (name) {
-        modules[name] = ret;
+        amdModules[name] = ret;
     }
-    modules[callerScript.replace(/\.js$/, '')] = ret;
+    amdModules[callerScript.replace(/\.js$/, '')] = ret;
 };

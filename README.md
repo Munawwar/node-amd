@@ -11,7 +11,7 @@ amdefine forces one to add this -> `if (typeof define !== 'function') { var defi
 require('./node-amd.js');
 
 requirejs.config({
-    baseUrl: '../../http-dev/',
+    baseUrl: '../../www/', //path relative to current script (__dirname).
     paths: {
         jquery: 'lib/jquery/dist/jquery'
     }
@@ -25,7 +25,6 @@ define(['web/model/BaseModel', 'jquery'], function (BaseModel, $) {
 ### Not supported yet
 
 - http/https URLs in dependencies.
-- Windows support.
 - [CommonJS Wrapper style](http://requirejs.org/docs/api.html#cjsmodule).
 - Plugin API
 
