@@ -10,7 +10,7 @@ var modules = {};
 
 function getDependencies(deps, callerScript) {
     var cfg = GLOBAL.requirejs.cfg,
-        callerPath = callerScript.split('/').slice(0, -1).join('/'); //Remove script name.
+        callerPath = callerScript.split(path.sep).slice(0, -1).join(path.sep); //Remove script name.
 
     //Find dependencies
     deps.forEach(function (depPath, i) {
@@ -72,7 +72,7 @@ GLOBAL.requirejs.config = function (cfg) {
         //Figure out the path of the JS file that called this function.
         var callerScript = (new Error()).stack.split('\n')[2];
         callerScript = callerScript.substr(callerScript.indexOf('(') + 1).split(':')[0];
-        var callerPath = callerScript.split('/').slice(0, -1).join('/'); //Remove script name.
+        var callerPath = callerScript.split(path.sep).slice(0, -1).join(path.sep); //Remove script name.
 
         cfg.baseUrl = path.resolve(callerPath, cfg.baseUrl);
         //console.log('baseUrl = ' + cfg.baseUrl);
