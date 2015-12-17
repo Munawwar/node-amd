@@ -28,5 +28,5 @@ define(['web/model/BaseModel', 'jquery'], function (BaseModel, $) {
 - http/https URLs in dependencies.
 - Windows support.
 - [CommonJS Wrapper style](http://requirejs.org/docs/api.html#cjsmodule).
-
+- Plugin API
 

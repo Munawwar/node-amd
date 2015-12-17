@@ -6,27 +6,27 @@
 
 var path = require('path');
 
-GLOBAL.requirejs = {
-    config: function (cfg) {
-        if (!cfg) {
-            return this.cfg;
-        } else {
-            this.cfg = cfg;
+GLOBAL.requirejs = function () {};
 
-            //Figure out the path of the JS file that called this function.
-            var callerScript = (new Error()).stack.split('\n')[2];
-            callerScript = callerScript.substr(callerScript.indexOf('(') + 1).split(':')[0];
-            var callerPath = callerScript.split('/').slice(0, -1).join('/'); //Remove script name.
+requirejs.config = function (cfg) {
+    if (!cfg) {
+        return this.cfg;
+    } else {
+        this.cfg = cfg;
 
-            cfg.baseUrl = path.resolve(callerPath, cfg.baseUrl);
-            //console.log('baseUrl = ' + cfg.baseUrl);
+        //Figure out the path of the JS file that called this function.
+        var callerScript = (new Error()).stack.split('\n')[2];
+        callerScript = callerScript.substr(callerScript.indexOf('(') + 1).split(':')[0];
+        var callerPath = callerScript.split('/').slice(0, -1).join('/'); //Remove script name.
 
-            Object.keys(cfg.paths || {}).forEach(function (moduleName) {
-                var fullPath = path.resolve(cfg.baseUrl, cfg.paths[moduleName]);
-                //console.log('Resolved path for ' + moduleName + ' to ' + path);
-                cfg.paths[moduleName] = fullPath;
-            });
-        }
+        cfg.baseUrl = path.resolve(callerPath, cfg.baseUrl);
+        //console.log('baseUrl = ' + cfg.baseUrl);
+
+        Object.keys(cfg.paths || {}).forEach(function (moduleName) {
+            var fullPath = path.resolve(cfg.baseUrl, cfg.paths[moduleName]);
+            //console.log('Resolved path for ' + moduleName + ' to ' + path);
+            cfg.paths[moduleName] = fullPath;
+        });
     }
 };
 
@@ -62,6 +62,8 @@ GLOBAL.define = (function () {
                 fullPath = path.resolve(callerPath, depPath);
             } else if (cfg.paths[depPath]) { //If module name is in config, load that instead
                 fullPath = cfg.paths[depPath];
+            } else if (depPath[0] === '/' || depPath.slice(-3) === '.js') { //Absolute path
+                fullPath = depPath;
             } else { //Path relative to baseUrl
                 fullPath = path.resolve(requirejs.cfg.baseUrl, depPath);
             }
