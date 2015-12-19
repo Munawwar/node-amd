@@ -14,9 +14,9 @@ function getDependencies(deps, callerScript) {
 
     //Find dependencies
     deps.forEach(function (depPath, i) {
-        //Detect plugins
-        if (depPath.match(/^\w+!/)) {
-            return console.warn(callerScript + ': RequireJS plugins aren\'t supported.');
+        //Detect plugins and handle them first
+        if ((/^\w+!/).test(depPath)) {
+            return (deps[i] = handlePlugin(depPath, callerScript));
         }
 
         var fullPath;
@@ -26,13 +26,14 @@ function getDependencies(deps, callerScript) {
             modules[fullPath] = {};
         } else if (depPath[0] === '.') { //Path relative to caller script.
             fullPath = path.resolve(callerPath, depPath);
-        } else if (cfg.paths[depPath]) { //If module name is in config, load that instead
+        } else if (cfg.paths[depPath]) { //If module name is in config, use that instead
             fullPath = cfg.paths[depPath];
         } else if (depPath[0] === '/' || depPath.slice(-3) === '.js') { //Absolute path
             fullPath = depPath;
         } else { //Path relative to baseUrl
             fullPath = path.resolve(cfg.baseUrl, depPath);
         }
+
         //console.log(' -- Dependency ' + fullPath);
         if (!modules[fullPath]) {
             var ret = require(fullPath);
@@ -54,8 +55,7 @@ GLOBAL.requirejs = function (deps, callback) {
     }
 
     //Figure out the path of the JS file that called this function.
-    var callerScript = (new Error()).stack.split('\n')[2];
-    callerScript = callerScript.substr(callerScript.indexOf('(') + 1).split(':')[0];
+    var callerScript = findCallerFromError(new Error());
 
     //Find dependencies
     deps = getDependencies(deps, callerScript);
@@ -70,9 +70,8 @@ GLOBAL.requirejs.config = function (cfg) {
         this.cfg = cfg;
 
         //Figure out the path of the JS file that called this function.
-        var callerScript = (new Error()).stack.split('\n')[2];
-        callerScript = callerScript.substr(callerScript.indexOf('(') + 1).split(':')[0];
-        var callerPath = callerScript.split(path.sep).slice(0, -1).join(path.sep); //Remove script name.
+        var callerScript = findCallerFromError(new Error()),
+            callerPath = callerScript.split(path.sep).slice(0, -1).join(path.sep); //Remove script name.
 
         cfg.baseUrl = path.resolve(callerPath, cfg.baseUrl);
         //console.log('baseUrl = ' + cfg.baseUrl);
@@ -93,8 +92,7 @@ GLOBAL.define = function (name, deps, moduleFactory) {
     name = args.pop();
 
     //Figure out the path of the JS file that called this function.
-    var callerScript = (new Error()).stack.split('\n')[2];
-    callerScript = callerScript.substr(callerScript.indexOf('(') + 1).split(':')[0];
+    var callerScript = findCallerFromError(new Error());
     //console.log('define() called from ' + callerScript);
 
     //Find dependencies
@@ -105,8 +103,78 @@ GLOBAL.define = function (name, deps, moduleFactory) {
     if (typeof moduleFactory === 'function') {
         ret = moduleFactory.apply(null, deps);
     }
+
     if (name) {
         modules[name] = ret;
     }
     modules[callerScript.replace(/\.js$/, '')] = ret;
 };
+
+/*
+ * Find the caller script path from an Error object.
+ * The observation is that the caller path is exactly at the third line of the stack trace.
+ */
+function findCallerFromError(err) {
+    var callerScript = err.stack.split('\n')[2], // caller path is exactly at the third line of the stack trace.
+        pos = callerScript.indexOf('(') + 1;
+    if (pos <= 0) {
+        pos = callerScript.indexOf('at ') + 3;
+    }
+    callerScript = callerScript.substr(pos).split(':')[0];
+    return callerScript;
+}
+
+/*
+ * Load a 'plugin!string' dependency.
+ */
+function handlePlugin(depPath, callerScript) {
+    var cfg = GLOBAL.requirejs.cfg,
+        match = depPath.match(/^(\w+)!/),
+        name = match[1],
+        callerPath = callerScript.split(path.sep).slice(0, -1).join(path.sep); //Remove script name.
+
+    //Load plugin if not loaded
+    if (!modules[name]) {
+        //The plugin should be there in cfg.paths
+        if (cfg.paths[name]) {
+            require(cfg.paths[name]);
+            if (modules[cfg.paths[name]]) {
+                modules[name] = modules[cfg.paths[name]];
+            }
+        }
+    }
+
+    if (modules[name] && modules[name].load) {
+        var dep;
+        callPlugin(name, depPath.substr(name.length + 1), callerPath, function (value) {
+            dep = value;
+        });
+        return dep;
+    } else {
+        console.warn(callerScript + ': Could not find plugin. Plugin was not defined or was not included in path config.');
+        return null;
+    }
+}
+
+/*
+ * @param {String} filepath The string that appears after the ! in the plugin string. Most of the time it's a file path.
+ */
+function callPlugin(pluginName, filepath, callerPath, onload) {
+    var req = function (deps, callback) { //special require function, intended to be sent to plugin.load()
+        deps.forEach(function (depPath, i) {
+            if (depPath[0] === '.') { //path relative to callerPath
+                depPath[i] = path.resolve(callerPath, depPath);
+            }
+        });
+        GLOBAL.requirejs(deps, callback);
+    };
+    req.toUrl = function (depPath) {
+        return path.resolve(callerPath, depPath);
+    };
+    req.defined = req.specified = function (moduleName) {
+        return !!modules[moduleName];
+    };
+
+    //onload should be called syncronously.
+    modules[pluginName].load(filepath, req, onload);
+}

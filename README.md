@@ -1,6 +1,6 @@
 ## node-amd
 
-Aim of this project is to make AMD modules usable in nodejs. Useful for reusing client-side data model code on the server-side.
+Aim of this project is to make AMD modules usable with nodejs. Useful for unit testing or reusing client-side data model code on the server-side.
 
 **Why do you not use amdefine?**
 
@@ -22,9 +22,31 @@ define(['web/model/BaseModel', 'jquery'], function (BaseModel, $) {
 });
 ```
 
-### Not supported yet
+### Configuration support
 
+At the moment only baseUrl and paths configuration options are supported.
+
+### Plugin support
+
+node-amd has partial support for plugins. Only [plugin.load()](http://requirejs.org/docs/plugins.html#apiload) function is supported, and
+plugin should be added to paths config.
+
+Existing plugins won't work without modification, since most plugins use XHR. On node, node-amd expect requirejs plugin to synchronously load and return output. Example:
+
+```js
+var fs = require('fs');
+define({
+    load: function (path, req, onload) {
+        //asynchronous API like fs.readFile() cannot be used.
+        onload(fs.readFileSync(req.toUrl(path), 'utf8'));
+    }
+});
+```
+
+### Not supported
+
+- Full requirejs configuration options.
 - http/https URLs in dependencies.
 - [CommonJS Wrapper style](http://requirejs.org/docs/api.html#cjsmodule).
-- Plugin API
+- Full plugin API
 
