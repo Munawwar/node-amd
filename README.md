@@ -7,8 +7,12 @@ Aim of this project is to make AMD modules usable with nodejs. Useful for unit t
 amdefine forces one to add this -> `if (typeof define !== 'function') { var define = require('amdefine')(module) }` to **each** module, which is inconvenient. node-amd declares globals.
 
 ### Usage
+```bash
+npm install node-amd
+```
+
 ```js
-require('./node-amd.js');
+require('node-amd');
 
 requirejs.config({
     baseUrl: '../../www/', //path relative to current script (__dirname).
