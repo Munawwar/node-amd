@@ -2,7 +2,7 @@
 
 Aim of this project is to make AMD modules usable with nodejs. Useful for unit testing or reusing client-side data model code on the server-side.
 
-**Why do you not use amdefine?**
+**Why do I not use amdefine?**
 
 amdefine forces one to add this -> `if (typeof define !== 'function') { var define = require('amdefine')(module) }` to **each** module, which is inconvenient. node-amd declares globals.
 
@@ -35,7 +35,7 @@ At the moment only baseUrl and paths configuration options are supported.
 node-amd has partial support for plugins. Only [plugin.load()](http://requirejs.org/docs/plugins.html#apiload) function is supported, and
 plugin should be added to paths config.
 
-Existing plugins won't work without modification, since most plugins use XHR. On node, node-amd expect requirejs plugin to synchronously load and return output. Example:
+Existing plugins won't work without modification, since most plugins use XHR. On node, node-amd expect requirejs plugins to synchronously load and return output. Example:
 
 ```js
 var fs = require('fs');
@@ -47,10 +47,11 @@ define({
 });
 ```
 
-### Not supported
+### Not supported yet
 
 - Full requirejs configuration options.
 - http/https URLs in dependencies.
 - [CommonJS Wrapper style](http://requirejs.org/docs/api.html#cjsmodule).
 - Full plugin API
 
+Ping me if you want support for them.
